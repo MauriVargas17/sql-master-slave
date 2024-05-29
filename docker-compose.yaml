@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mysql-master:
+    image: mysql:8.0
+    container_name: mysql-master
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: masterrootpassword
+      MYSQL_DATABASE: tigre
+    volumes:
+      - master_data:/var/lib/mysql
+      - ./master_init:/docker-entrypoint-initdb.d
+      - ./master_init/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports:
+      - "3307:3306"
+
+  mysql-slave:
+    image: mysql:8.0
+    container_name: mysql-slave
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: slaverootpassword
+      MYSQL_DATABASE: tigre
+      MYSQL_REPLICATION_USER: repl_user
+      MYSQL_REPLICATION_PASSWORD: repl_password
+      MYSQL_MASTER_HOST: mysql-master
+      MYSQL_MASTER_PORT: 3306
+    depends_on:
+      - mysql-master
+    volumes:
+      - slave_data:/var/lib/mysql
+      - ./slave_init:/docker-entrypoint-initdb.d
+      - ./slave_init/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports:
+      - "3308:3306"
+
+volumes:
+  master_data:
+  slave_data:
